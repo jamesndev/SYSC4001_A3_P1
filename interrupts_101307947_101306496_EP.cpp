@@ -17,6 +17,21 @@ void FCFS(std::vector<PCB> &ready_queue) {
             );
 }
 
+void priority(std::vector<PCB> &ready_queue) {
+    std::sort( 
+                ready_queue.begin(),
+                ready_queue.end(),
+                []( const PCB &first, const PCB &second ){
+                    if (first.priority == second.priority) {
+                        return (first.arrival_time < second.arrival_time);
+                    }
+                    return (first.priority < second.priority);  
+                } 
+            );
+}
+
+
+
 std::tuple<std::string /* add std::string for bonus mark */ > run_simulation(std::vector<PCB> list_processes) {
 
     std::vector<PCB> ready_queue;   //The ready queue of processes
@@ -39,7 +54,7 @@ std::tuple<std::string /* add std::string for bonus mark */ > run_simulation(std
 
     //Loop while till there are no ready or waiting processes.
     //This is the main reason I have job_list, you don't have to use it.
-    while(!all_process_terminated(job_list) || job_list.empty()) {
+    while(!all_process_terminated(job_list) && job_list.empty()) {
 
         //Inside this loop, there are three things you must do:
         // 1) Populate the ready queue with processes as they arrive
@@ -58,16 +73,23 @@ std::tuple<std::string /* add std::string for bonus mark */ > run_simulation(std
                 job_list.push_back(process); //Add it to the list of processes
 
                 execution_status += print_exec_status(current_time, process.PID, NEW, READY);
-            }
+                current_time++;
+            } 
         }
 
         ///////////////////////MANAGE WAIT QUEUE/////////////////////////
         //This mainly involves keeping track of how long a process must remain in the ready queue
 
+
+        
+
         /////////////////////////////////////////////////////////////////
 
         //////////////////////////SCHEDULER//////////////////////////////
-        FCFS(ready_queue); //example of FCFS is shown here
+
+        priority(ready_queue); 
+
+        
         /////////////////////////////////////////////////////////////////
 
     }
