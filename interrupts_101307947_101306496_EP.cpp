@@ -1,7 +1,4 @@
 /**
- * @file interrupts.cpp
- * @author Sasisekhar Govind
- * @brief template main.cpp file for Assignment 3 Part 1 of SYSC4001
  * 
  */
 
@@ -53,7 +50,7 @@ std::tuple<std::string /* add std::string for bonus mark */ > run_simulation(std
     //make the output table (the header row)
     execution_status = print_exec_header();
 
-    // Populate job_list with given processes
+    // Populate job_list with the given processes
     job_list = list_processes;
 
     //Loop while till there are no ready or waiting processes.
@@ -94,10 +91,18 @@ std::tuple<std::string /* add std::string for bonus mark */ > run_simulation(std
 
         for (auto &process : wait_queue) {
             if(process.state == WAITING) {
-                if(assign_memory(process)) {
+                if(assign_memory(process) && process.io_freq == 0 && process.io_duration == 0) {
                     process.state = READY;
                     ready_queue.push_back(process);
                     execution_status += print_exec_status(current_time, process.PID, WAITING, READY);
+
+                } else if (process.io_remaining > 0) {
+                    process.io_remaining--;
+                    if (process.io_remaining == 0) {
+                        process.state = READY;
+                        ready_queue.push_back(process);
+                        execution_status += print_exec_status(current_time, process.PID, WAITING, READY);
+                    }
                 }
             }
         }
@@ -106,6 +111,12 @@ std::tuple<std::string /* add std::string for bonus mark */ > run_simulation(std
         
         //////////////////////////SCHEDULER/////////////////////////////
 
+        wait_queue.erase(
+            std::remove_if(wait_queue.begin(), wait_queue.end(),
+                        [](const PCB &p) { return p.state == READY; }),
+            wait_queue.end()
+        );
+        
         if((running.state == NOT_ASSIGNED || running.state == TERMINATED) && !ready_queue.empty()) {
             priority(ready_queue);
             run_process(running, job_list, ready_queue, current_time);
@@ -115,12 +126,30 @@ std::tuple<std::string /* add std::string for bonus mark */ > run_simulation(std
 
         if(running.state == RUNNING) {
             sync_queue(job_list, running);
-            running.remaining_time--;
-    
-            if(running.remaining_time == 0) {
-                terminate_process(running, job_list);
-                execution_status += print_exec_status(current_time + 1, running.PID, RUNNING, TERMINATED);
-                idle_CPU(running);
+
+            if (running.io_freq > 0) {
+                running.io_count++;
+
+                if(running.io_count == running.io_freq && running.remaining_time > 0) {
+
+                    execution_status += print_exec_status(current_time, running.PID, RUNNING, WAITING);
+                    running.state = WAITING;
+                    running.io_remaining = running.io_duration;
+                    running.io_count = 0;
+                    wait_queue.push_back(running);
+                    
+                    idle_CPU(running);
+                    continue;
+                }
+            }
+
+            if(running.state == RUNNING) {
+                running.remaining_time--;
+                if(running.remaining_time == 0) {
+                    terminate_process(running, job_list);
+                    execution_status += print_exec_status(current_time, running.PID, RUNNING, TERMINATED);
+                    idle_CPU(running);
+                }
             }
         }       
         
