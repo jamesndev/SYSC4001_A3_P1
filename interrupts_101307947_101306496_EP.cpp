@@ -30,7 +30,65 @@ void priority(std::vector<PCB> &ready_queue) {
     );
 }
 
-std::tuple<std::string> run_simulation(std::vector<PCB> list_processes) {
+unsigned int total_used_memory() {
+    unsigned int used_memory = 0;
+    for (const auto &process : memory_paritions) {
+        if(process.occupied != -1 ) {
+            used_memory += process.size;
+        }
+    }
+    return used_memory;
+}
+
+unsigned int total_free_memory() {
+    unsigned int free_memory = 0;
+    for (const auto &process : memory_paritions) {
+        if(process.occupied != -1 ) {
+            free_memory == process.size;
+        }
+    }
+    return free_memory;
+}
+
+unsigned int total_usable_memory() {
+    unsigned int free_memory = 0;
+    for (const auto &process : memory_paritions) {
+        if(process.occupied != -1 ) {
+            free_memory == process.size;
+        }
+    }
+    return free_memory;
+}
+
+std::string memory_state_capture(unsigned int current_time, int pid) {
+    std::stringstream memory_capture;
+
+    memory_capture << "\n";
+    memory_capture << "PID " << pid << " starts running at " << current_time << "\n";    
+    memory_capture << "-----------------------------------------\n";
+
+    for (const auto &process : memory_paritions) {
+        memory_capture << "Partition: " << process.partition_number
+            << ", Size: " << process.size << " ";
+        if(process.occupied == -1) {
+            memory_capture << ", Availability: Free\n";
+        } else {
+            memory_capture << ", Availability: used by pid " << process.occupied << "\n";
+        }
+    }
+
+    memory_capture << "-----------------------------------------------------\n";
+    memory_capture << "Total memory used:   " << total_used_memory()    << "\n";
+    memory_capture << "Total free memory:   " << total_free_memory()    << "\n";
+    memory_capture << "Total memory used:   " << total_usable_memory()  << "\n";
+    memory_capture << "-----------------------------------------------------\n";
+
+    return memory_capture.str();
+}
+
+
+
+std::tuple<std::string, std::string> run_simulation(std::vector<PCB> list_processes) {
 
     std::vector<PCB> ready_queue;   //The ready queue of processes
     std::vector<PCB> wait_queue;    //The wait queue of processes
@@ -47,6 +105,7 @@ std::tuple<std::string> run_simulation(std::vector<PCB> list_processes) {
 
    //make the output table (the header row)
     std::string execution_status = print_exec_header();
+    std::string memory_status;
 
     // Populate job_list with the given processes
     job_list = list_processes;
@@ -120,12 +179,16 @@ std::tuple<std::string> run_simulation(std::vector<PCB> list_processes) {
             priority(ready_queue);
 
             run_process(running, job_list, ready_queue, current_time);
+
+            sync_queue(job_list, running);
             
             if(!running.has_run_so_far) {
                 execution_status += print_exec_status(current_time, running.PID, READY, RUNNING);
+                memory_status += memory_state_capture(current_time, running.PID);
                 running.has_run_so_far = true;
             } else {
                 execution_status += print_exec_status(end_time, running.PID, READY, RUNNING);
+                memory_status += memory_state_capture(current_time, running.PID);
             }
         }
 
@@ -137,7 +200,8 @@ std::tuple<std::string> run_simulation(std::vector<PCB> list_processes) {
 
             if (running.remaining_time == 0) {
                 terminate_process(running, job_list);
-                execution_status += print_exec_status(current_time + 1, running.PID, RUNNING, TERMINATED);
+                sync_queue(job_list, running);
+                execution_status += print_exec_status(end_time, running.PID, RUNNING, TERMINATED);
                 idle_CPU(running);
             }
 
@@ -146,7 +210,8 @@ std::tuple<std::string> run_simulation(std::vector<PCB> list_processes) {
                 running.state = WAITING;
                 running.io_remaining = running.io_duration;
                 wait_queue.push_back(running);
-                execution_status += print_exec_status(current_time + 1, running.PID, RUNNING, WAITING); 
+                sync_queue(job_list, running);
+                execution_status += print_exec_status(end_time, running.PID, RUNNING, WAITING); 
                 idle_CPU(running);
 
             }
@@ -157,10 +222,11 @@ std::tuple<std::string> run_simulation(std::vector<PCB> list_processes) {
         /////////////////////////////////////////////////////////////////
     }
 
+
     //Close the output table
     execution_status += print_exec_footer();
 
-    return std::make_tuple(execution_status);
+    return std::make_tuple(execution_status, memory_status);
 }
 
 
@@ -192,9 +258,10 @@ int main(int argc, char** argv) {
     input_file.close();
 
     //With the list of processes, run the simulation
-    auto [exec] = run_simulation(list_process);
+    auto [exec, memory] = run_simulation(list_process);
 
     write_output(exec, "execution.txt");
+    write_output(memory, "memory_usage.txt");
 
     return 0;
 }
