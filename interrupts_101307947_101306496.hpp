@@ -1,5 +1,8 @@
 /**
-
+ * @file interrupts.cpp
+ * @author Sasisekhar Govind
+ * @brief template main.cpp file for Assignment 3 Part 1 of SYSC4001
+ * 
  */
 
 #ifndef INTERRUPTS_HPP_
@@ -65,6 +68,7 @@ struct PCB{
     unsigned int    io_remaining;
     unsigned int    io_count;
     unsigned int    io_amount_so_far;
+    bool            has_run_so_far;
 };
 
 //------------------------------------HELPER FUNCTIONS FOR THE SIMULATOR------------------------------
@@ -171,6 +175,8 @@ std::string print_exec_header() {
 
 }
 
+
+
 std::string print_exec_status(unsigned int current_time, int PID, states old_state, states new_state) {
 
     const int tableWidth = 49;
@@ -273,6 +279,7 @@ PCB add_process(std::vector<std::string> tokens) {
     process.io_remaining = 0;
     process.io_count = 0;
     process.io_amount_so_far = 0;
+    process.has_run_so_far = false;
 
     return process;
 }
@@ -320,6 +327,7 @@ void idle_CPU(PCB &running) {
     running.io_remaining = 0;
     running.io_count = 0;
     running.io_amount_so_far = 0;
+    running.has_run_so_far = false;
 }
 
 #endif
