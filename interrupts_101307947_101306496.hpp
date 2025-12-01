@@ -69,6 +69,7 @@ struct PCB{
     unsigned int    io_count;
     unsigned int    io_amount_so_far;
     bool            has_run_so_far;
+    unsigned int    quantum_remaining;
 };
 
 //------------------------------------HELPER FUNCTIONS FOR THE SIMULATOR------------------------------
@@ -281,6 +282,8 @@ PCB add_process(std::vector<std::string> tokens) {
     process.io_amount_so_far = 0;
     process.has_run_so_far = false;
 
+    process.quantum_remaining = 0;
+
     return process;
 }
 
@@ -328,6 +331,7 @@ void idle_CPU(PCB &running) {
     running.io_count = 0;
     running.io_amount_so_far = 0;
     running.has_run_so_far = false;
+    running.quantum_remaining = 0;
 }
 
 #endif
