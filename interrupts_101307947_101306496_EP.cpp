@@ -3,6 +3,9 @@
  * @author Sasisekhar Govind
  * @brief template main.cpp file for Assignment 3 Part 1 of SYSC4001
  * 
+ * @author James Noel 101306496
+ * @author Colin Calhoun 101307947
+ * 
  */
 
 #include "interrupts_101307947_101306496.hpp"
