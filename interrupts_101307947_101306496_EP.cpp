@@ -44,7 +44,7 @@ unsigned int total_free_memory() {
     unsigned int free_memory = 0;
     for (const auto &process : memory_paritions) {
         if(process.occupied == -1 ) {
-            free_memory == process.size;
+            free_memory += process.size;
         }
     }
     return free_memory;
@@ -54,7 +54,7 @@ unsigned int total_usable_memory() {
     unsigned int free_memory = 0;
     for (const auto &process : memory_paritions) {
         if(process.occupied != -1 ) {
-            free_memory == process.size;
+            free_memory += process.size;
         }
     }
     return free_memory;
