@@ -43,7 +43,7 @@ unsigned int total_used_memory() {
 unsigned int total_free_memory() {
     unsigned int free_memory = 0;
     for (const auto &process : memory_paritions) {
-        if(process.occupied != -1 ) {
+        if(process.occupied == -1 ) {
             free_memory == process.size;
         }
     }
@@ -80,7 +80,7 @@ std::string memory_state_capture(unsigned int current_time, int pid) {
     memory_capture << "-----------------------------------------------------\n";
     memory_capture << "Total memory used:   " << total_used_memory()    << "\n";
     memory_capture << "Total free memory:   " << total_free_memory()    << "\n";
-    memory_capture << "Total memory used:   " << total_usable_memory()  << "\n";
+    memory_capture << "Total usable memory:   " << total_usable_memory()  << "\n";
     memory_capture << "-----------------------------------------------------\n";
 
     return memory_capture.str();
